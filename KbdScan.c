@@ -13,7 +13,9 @@
 #include <linux/kobject.h>    // Using kobjects for the sysfs bindings
 #include <linux/kthread.h>
 #include <linux/delay.h>
+#include <asm/uaccess.h>
 #include "mygpio.h"
+#include "myqueue.h"
 
 #define  THREAD_TIME   5  ///< The thread execution frequency -- 5ms
 
@@ -22,8 +24,6 @@ MODULE_AUTHOR("Henry Leinen");
 MODULE_DESCRIPTION("A simple Linux keyboard matrix driver");
 MODULE_VERSION("0.2");
 
-//static const char* gpioRowsNames[9] = { "Row0", "Row1", "Row2", "Row3", "Row4", "Row5", "Row6", "Row7", "Row8" };
-//static const char* gpioColsNames[9] = { "Col0", "Col1", "Col2", "Col3", "Col4", "Col5", "Col6", "Col7", "Col8" };
 
 static unsigned int gpioCols[9] = { 18, 23, 24, 25, 12, 16, 20, 26, 19 };
 static unsigned int gpioRows[9] = {  2,  3,  4, 17, 27, 22, 10,  9, 11 };
@@ -35,14 +35,15 @@ MODULE_PARM_DESC(gpioRows, " GPIO Rows Pins number array");
 
 
 static char   attrGrpName[8] = "kbdscan";      ///< Null terminated default string -- just in case
+static char   deviceName[8] = "kbdscan";
 static bool   isDebounce = 1;               ///< Use to store the debounce state (on by default)
 static int    numberPresses = 0;            ///< For information, store the number of button presses
 static int    keyNum = 0;		    ///< The key which was last detected to be pressed
 static int    currentRow = 0;
 static bool   singleLine = 0;			// do not automatically advance to nex keyboard matrix line. This way, the current scan line is selected by the user
 static int    kbdscan_major = 0;	///	Device driver major number
-
-#include "mygpio.c"
+static struct myqueue_operations_t *q_ops;
+static struct myqueue_t *queue;
 
 static ssize_t keyNum_show(struct kobject *kobj, struct kobj_attribute *attr, char *buf){
 	return keyNum == 0 ? sprintf(buf, "\n") : sprintf(buf, "%d\n", keyNum);
@@ -212,6 +213,12 @@ static int kbdScan(void *arg) {
 			currentRow++;
 		if (currentRow > 8) {
 			currentRow = 0;
+			if (keyNum != act_key_num) {		//	is there a change detected ?
+				if (act_key_num != 0) {		//	is it a new key being pressed ?
+					if (q_ops)
+						q_ops->put(queue, (char)act_key_num);
+				}
+			}
 			keyNum = act_key_num;
 		}
 		for (row = 0 ; row < 9 ; row++)
@@ -227,16 +234,20 @@ static int kbdScan(void *arg) {
 
 
 static ssize_t kbdscan_file_read( struct file *file_ptr, char __user *user_Buffer, size_t count, loff_t *position) {
+	ssize_t retval = 0;
 
 	char key = (char)keyNum;
 
-	if (keyNum == 0) {
-		return 0;
-	}
+	if (q_ops) {
+		if (q_ops->get(queue, &key) == 1) {
+			put_user(key, user_Buffer);
+			retval = 1;
+		} else
+			retval = 0;
+	} else
+		retval = 0;
 
-	put_user(key, user_Buffer);
-
-	return 1;
+	return retval;
 }
 
 
@@ -264,6 +275,7 @@ static int __init kbdScan_init(void){
 
 	printk(KERN_INFO "KBDSCAN: Initializing the Keyboard Matrix LKM\n");
 	sprintf(attrGrpName, "matrix0");           // Create the kbdscan name for /sys/kbdscan/matrix0
+	sprintf(deviceName, "kbdscan");
 
 	// create the kobject sysfs entry at /sys/ebb -- probably not an ideal location!
 	ebb_kobj = kobject_create_and_add("kbdscan", kernel_kobj->parent); // kernel_kobj points to /sys/kernel
@@ -281,7 +293,7 @@ static int __init kbdScan_init(void){
 
 	// Initialize and register the char device driver structure
 	printk(KERN_INFO "KBDSCAN: Trying to register device driver \n");
-	result = register_chrdev( 0, attrGrpName, &kbdscan_driver_fops );
+	result = register_chrdev( 0, deviceName, &kbdscan_driver_fops );
 	if (result < 0) {
 		printk (KERN_WARNING "KBDSCAN: can't register character device with errorcode = %i\n", result);
 	} else {
@@ -291,6 +303,16 @@ static int __init kbdScan_init(void){
 
 	// Initialize my GPIO
 	mygpio_setup();
+
+	// Initialize the queue
+	q_ops = get_queue_ops();
+	if (q_ops == NULL)
+		return -1;
+
+	queue = q_ops->init(50);
+	if (queue == NULL) 
+		return -1;
+	printk (KERN_INFO "KBDSCAN: Successfully created a queue object.\n");
 
 	// Setup the keyboard matrix IOs for operation
 	for (row = 0 ; row < 9 ; row++) {
@@ -318,10 +340,13 @@ static int __init kbdScan_init(void){
  */
 static void __exit kbdScan_exit(void){
 
-	unregister_chrdev(kbdscan_major, attrGrpName);
+	unregister_chrdev(kbdscan_major, deviceName);
 	kthread_stop(task);
 	kobject_put(ebb_kobj);                   // clean up -- remove the kobject sysfs entry
 	mygpio_exit();
+	if (q_ops != NULL)
+		if (queue != NULL)
+			q_ops->exit(queue);
 	printk(KERN_INFO "KBDSCAN: Goodbye from the KBDSCAN LKM!\n");
 }
 
