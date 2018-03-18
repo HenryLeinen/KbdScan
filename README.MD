@@ -6,11 +6,11 @@ Please note that the module will only work on **Raspberry Pi** modules, due to t
 different hardware can be done by modifying the **mygpio.c** functions.
 
 ## How to install the driver ?
-The module can either be installed by calling ´<make load>´. This will not generate the necessary device in the /dev/ folder.
-It should better be installed by executing the shell script '<sudo ./load_kbdscan>'.
+The module can either be installed by calling `make load`. This will not generate the necessary device in the /dev/ folder.
+It should better be installed by executing the shell script `sudo ./load_kbdscan`.
 
 ## How to uninstall the driver ?
-The module should be uninstalled by calling `<make unload>`.
+The module should be uninstalled by calling `make unload`.
 
 ## Which parameters can be modified ?
 
