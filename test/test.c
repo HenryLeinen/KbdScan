@@ -14,7 +14,7 @@ int main (int argc, char **argl) {
 	while(1) {
 		c = fgetc(f);
 		if (c != -1)
-			printf("N: %i\n", c);
+			printf("%c\n",(char) c);
 	}
 
 	fclose(f);

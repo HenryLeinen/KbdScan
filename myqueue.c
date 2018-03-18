@@ -2,7 +2,7 @@
 #include <linux/slab.h>			//	for kmalloc
 #include "myqueue.h"
 
-
+//#define DEBUG
 
 
 
@@ -77,7 +77,9 @@ static int myqueue_put(struct myqueue_t *pQueue, char c) {
 			pQueue->readptr ++;
 			pQueue->readptr %= pQueue->size;
 		} else {
+#ifdef DEBUG
 			printk (KERN_INFO "KBDSCAN: successfully put one char in queue\n");
+#endif
 		}
 		retval = 1;
 	}
@@ -106,7 +108,9 @@ static int myqueue_get(struct myqueue_t *pQueue, char *c) {
 			*c = pQueue->data[pQueue->readptr++];
 			pQueue->readptr %= pQueue->size;
 			retval = 1;
+#ifdef DEBUG
 			printk (KERN_INFO "KBDSCAN: successfull received one char from queue\n");
+#endif
 		}
 	}
 

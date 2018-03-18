@@ -16,6 +16,7 @@
 #include <asm/uaccess.h>
 #include "mygpio.h"
 #include "myqueue.h"
+#include "keymap.h"
 
 #define  THREAD_TIME   5  ///< The thread execution frequency -- 5ms
 
@@ -240,7 +241,7 @@ static ssize_t kbdscan_file_read( struct file *file_ptr, char __user *user_Buffe
 
 	if (q_ops) {
 		if (q_ops->get(queue, &key) == 1) {
-			put_user(key, user_Buffer);
+			put_user(get_key_map_readable_char(key), user_Buffer);
 			retval = 1;
 		} else
 			retval = 0;
@@ -313,6 +314,9 @@ static int __init kbdScan_init(void){
 	if (queue == NULL) 
 		return -1;
 	printk (KERN_INFO "KBDSCAN: Successfully created a queue object.\n");
+
+	// Initialize the key translator
+	init_key_map();
 
 	// Setup the keyboard matrix IOs for operation
 	for (row = 0 ; row < 9 ; row++) {

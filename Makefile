@@ -2,7 +2,7 @@ TARGET_MODULE:=kbdscan
 
 # If we are running by kernel building system
 	obj-m += $(TARGET_MODULE).o
-	$(TARGET_MODULE)-objs := KbdScan.o mygpio.o myqueue.o
+	$(TARGET_MODULE)-objs := KbdScan.o mygpio.o myqueue.o keymap.o
 	BUILDSYSTEM_DIR:=/lib/modules/$(shell uname -r)/build
 	PWD:=$(shell pwd)
 
