@@ -21,14 +21,14 @@ There are two kinds of paramters for the module. The ones that are static and ne
 are dynamic and can be modified by changing the inside the /sys/kbdscan/matrix0/ folder.
 
 ### Static parameters
-* __gpioCols__   - **array of integers** - an array of GPIO pins to use as inputs for the keyboard matrix
-* __gpioRows__   - **array of integers** - an array of GPIO pins to use as outputs for the keyboard matrix, make sure a pull-down resistor is
+* __gpioCols__   - *array of integers* - an array of GPIO pins to use as inputs for the keyboard matrix
+* __gpioRows__   - *array of integers* - an array of GPIO pins to use as outputs for the keyboard matrix, make sure a pull-down resistor is
 available either as internal or external devices.
 
 ### Dynamic parameters and variables
-* __currentRow__ - **read-write** - the current row being checked for a key press
-* __keyNum__     - **read-only**  - the currently detected key code
-* __singleLine__ - **read-write** - activate single-row scan mode with a 1, activate automatic scan mode with a 0
+* __currentRow__ - *read-write* - the current row being checked for a key press
+* __keyNum__     - *read-only*  - the currently detected key code
+* __singleLine__ - *read-write* - activate single-row scan mode with a 1, activate automatic scan mode with a 0
 
 ## My use case
 I have created this module in order to be able to interface a flight simulator panel. The panel is purchased from Hispapanels.com. It is an
