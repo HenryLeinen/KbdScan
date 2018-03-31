@@ -104,7 +104,7 @@ void init_key_map(void) {
 	MAP_KEY(OVFY, 		"OVFY",		21);
 	MAP_KEY(SP,		" ", 		' ');
 	MAP_KEY(SLASH,		"/",		'/');
-	MAP_KEY(PLUS_MINUS,	"+/-",		22);
+	MAP_KEY(PLUS_MINUS,	"+/-",		'+');
 	MAP_KEY(DIM,		"DIM",		116);
 	MAP_KEY(BRT,		"BRT",		106);
 	MAP_KEY(MCDU_MENU,	"MCDU MENU",	115);
