@@ -206,7 +206,7 @@ static int kbdScan(void *arg) {
 		for (col = 0 ; col < 9 ; col++) {
 			if (mygpio_digital_read(gpioCols[col]) == 1) {
 				/* key press detected */
-				act_key_num = col<<4 | currentRow;
+				act_key_num = (col+1)<<4 | (currentRow+1);
 			}
 		}
 		/* advance to next row and set the outputs */
@@ -217,7 +217,7 @@ static int kbdScan(void *arg) {
 			if (keyNum != act_key_num) {		//	is there a change detected ?
 				if (act_key_num != 0) {		//	is it a new key being pressed ?
 					if (q_ops)
-						q_ops->put(queue, (char)act_key_num);
+						q_ops->put(queue, (uint8_t)act_key_num);
 				}
 			}
 			keyNum = act_key_num;
